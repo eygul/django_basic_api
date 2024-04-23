@@ -7,20 +7,18 @@ from rest_framework.views import APIView
 from django.http import Http404
 from rest_framework import generics
 from rest_framework import mixins
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication, TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import viewsets
 
-class genericAPIView(generics.GenericAPIView, mixins.ListModelMixin, mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.RetrieveModelMixin, mixins.DestroyModelMixin):
-    serializer_class= PostSerializer
-    queryset = Post.objects.all()
-    lookup_field = 'id'
-    def get(self, request, id):
-        if id:
-            return self.retrieve(request)
-        else:
-            return self.list(request)
-    def post(self, request):
-        return self.create(request)
-    def put(self, request, id=None):
-        return self.update(request, id)
-    def delete(self, request, id=None):
-        return self.destroy(request, id)
-        
+class PostViewSet(viewsets.ViewSet):
+    def list(self, request):
+        posts = Post.objects.all()
+        serializer = PostSerializer(posts, many=True)
+        return Response(serializer.data)
+    def create(self, request):
+      serializer = PostSerializer(data=request.data)
+      if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+      return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
